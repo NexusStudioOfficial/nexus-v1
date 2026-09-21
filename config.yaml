@@ -1,0 +1,105 @@
+# ==============================================================================
+# nexus-v1 — Central Configuration
+# All hyperparameters, paths, and Hugging Face metadata live here.
+# Every script in src/ reads this file via src/utils.py -> load_config()
+# ==============================================================================
+
+model:
+  name: "nexus-v1"
+  architecture: "nexus-causal-lm"       # custom architecture identifier stored in config.json
+  vocab_size: 8000                      # tokenizer vocabulary size
+  hidden_size: 256                      # embedding / hidden dimension
+  num_hidden_layers: 6                  # number of transformer decoder blocks
+  num_attention_heads: 8                # must evenly divide hidden_size
+  intermediate_size: 1024               # feed-forward inner dimension
+  max_position_embeddings: 512          # max sequence length the model supports
+  dropout: 0.1
+  attention_dropout: 0.1
+  layer_norm_eps: 1.0e-5
+  initializer_range: 0.02
+  tie_word_embeddings: true
+  pad_token_id: 0
+  bos_token_id: 1
+  eos_token_id: 2
+  unk_token_id: 3
+
+tokenizer:
+  path: "models/export"                 # where tokenizer.json is saved/loaded from
+  type: "bpe"                           # byte-pair encoding tokenizer
+  special_tokens:
+    pad_token: "<pad>"
+    bos_token: "<bos>"
+    eos_token: "<eos>"
+    unk_token: "<unk>"
+
+dataset:
+  raw_path: "data/raw/sample.json"
+  processed_dir: "data/processed"
+  text_field: "text"                    # or use prompt/completion pair fields below
+  prompt_field: "prompt"
+  completion_field: "completion"
+  max_seq_length: 128
+  val_split_ratio: 0.1
+  seed: 42
+
+training:
+  output_dir: "models/checkpoints"
+  # NOTE on num_epochs/batch_size with a tiny dataset (e.g. the bundled
+  # 8-example sample.json -> 7 train examples after the val split):
+  # batch_size=8 with only 7 train examples means ONE batch per epoch, so
+  # num_epochs=3 previously meant only 3 optimizer steps total -- nowhere
+  # near enough for a randomly-initialized transformer to learn anything,
+  # which is why generation looked like noise. batch_size is now smaller
+  # than the dataset so each epoch has multiple steps, and num_epochs is
+  # raised so the model actually gets enough gradient updates to fit this
+  # tiny corpus. Replace sample.json with a real, much larger dataset (see
+  # README) and scale batch_size/num_epochs back down accordingly.
+  num_epochs: 300
+  batch_size: 2
+  eval_batch_size: 2
+  gradient_accumulation_steps: 1
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  max_grad_norm: 1.0
+  use_amp: true                         # mixed precision (torch.amp)
+  log_every_n_steps: 10
+  eval_every_n_steps: 10
+  save_best_only: true
+  early_stopping_patience: 30
+  seed: 42
+  num_workers: 2
+
+onnx:
+  export_dir: "models/export"
+  onnx_filename: "nexus-v1.onnx"
+  quantized_filename: "nexus-v1.int8.onnx"
+  opset_version: 17
+  quantize: true
+  quantization_type: "int8"             # int8 | fp16
+  dynamic_axes:
+    input_names: ["input_ids", "attention_mask"]
+    output_names: ["logits"]
+
+inference:
+  default_max_new_tokens: 64
+  default_temperature: 0.8
+  default_top_p: 0.9
+  default_top_k: 50
+  repetition_penalty: 1.2
+
+huggingface:
+  repo_id_env_username: "HF_USERNAME"   # env var name holding the HF username/org
+  repo_name_env: "HF_REPO_NAME"         # env var name holding the target repo name
+  repo_type: "model"
+  private_env: "HF_PRIVATE_REPO"
+  commit_message: "Upload nexus-v1 model artifacts via deploy_hf.py"
+  license: "apache-2.0"
+  language: "en"
+  pipeline_tag: "text-generation"
+  tags:
+    - "text-generation"
+    - "onnx"
+    - "pytorch"
+    - "causal-lm"
+    - "nexus-v1"

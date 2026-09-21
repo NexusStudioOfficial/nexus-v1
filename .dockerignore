@@ -1,0 +1,12 @@
+# Keep the Docker build context (and the resulting image) small: none of
+# these are needed to run app/app.py, only to train/export the model.
+.git
+.gitignore
+.env
+.env.local
+__pycache__/
+*.pyc
+data/
+models/checkpoints/
+README.md
+requirements.txt

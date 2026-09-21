@@ -1,0 +1,34 @@
+[
+  {
+    "prompt": "Write a Luau function that adds two numbers.",
+    "completion": "local function add(a: number, b: number): number\n\treturn a + b\nend"
+  },
+  {
+    "prompt": "Create a Luau function to check if a table is empty.",
+    "completion": "local function isEmpty(t: {any}): boolean\n\treturn next(t) == nil\nend"
+  },
+  {
+    "prompt": "Write a Luau script that prints numbers from 1 to 5 using a for loop.",
+    "completion": "for i = 1, 5 do\n\tprint(i)\nend"
+  },
+  {
+    "prompt": "Create a Luau class-like module using a metatable for a Player object.",
+    "completion": "local Player = {}\nPlayer.__index = Player\n\nfunction Player.new(name: string, health: number)\n\tlocal self = setmetatable({}, Player)\n\tself.name = name\n\tself.health = health\n\treturn self\nend\n\nfunction Player:takeDamage(amount: number)\n\tself.health = math.max(0, self.health - amount)\nend\n\nreturn Player"
+  },
+  {
+    "prompt": "Write a Luau function that returns the maximum value in an array.",
+    "completion": "local function findMax(values: {number}): number\n\tlocal max = values[1]\n\tfor _, v in ipairs(values) do\n\t\tif v > max then\n\t\t\tmax = v\n\t\tend\n\tend\n\treturn max\nend"
+  },
+  {
+    "prompt": "Create a Luau RemoteEvent handler on the server that listens for a client request.",
+    "completion": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal remoteEvent = ReplicatedStorage:WaitForChild(\"MyRemoteEvent\")\n\nremoteEvent.OnServerEvent:Connect(function(player: Player, data: any)\n\tprint(player.Name .. \" sent: \", data)\nend)"
+  },
+  {
+    "prompt": "Write a Luau function that reverses a string.",
+    "completion": "local function reverseString(input: string): string\n\treturn string.reverse(input)\nend"
+  },
+  {
+    "prompt": "Create a simple Luau debounce function to prevent spamming an action.",
+    "completion": "local function debounce(fn: () -> ()): () -> ()\n\tlocal isRunning = false\n\treturn function()\n\t\tif isRunning then\n\t\t\treturn\n\t\tend\n\t\tisRunning = true\n\t\tfn()\n\t\ttask.wait(1)\n\t\tisRunning = false\n\tend\nend"
+  }
+]

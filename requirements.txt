@@ -1,0 +1,28 @@
+# Core deep learning
+torch>=2.2.0
+numpy>=1.24.0
+
+# Hugging Face ecosystem
+transformers>=4.40.0,<6.0.0
+tokenizers>=0.19.0
+huggingface_hub>=0.23.0
+safetensors>=0.4.3
+datasets>=2.19.0
+
+# ONNX export & inference
+onnx>=1.16.0
+onnxruntime>=1.18.0                   # CPU-only. For GPU inference: pip uninstall onnxruntime
+                                       # then pip install onnxruntime-gpu (same import name, so
+                                       # only one of the two should be installed at a time).
+onnxscript>=0.1.0
+
+# Config & environment
+pyyaml>=6.0.1
+python-dotenv>=1.0.1
+
+# UI / Playground
+gradio>=4.31.0
+
+# Utilities
+tqdm>=4.66.0
+scikit-learn>=1.4.0

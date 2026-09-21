@@ -1,0 +1,20 @@
+# Runtime dependencies for app/app.py ONLY -- used for deployment (Docker
+# image, Render, etc.), not for local training.
+#
+# Deliberately excludes torch, datasets, scikit-learn, onnx, and onnxscript:
+# those are needed by src/train.py, src/export_onnx.py, and friends, but
+# app.py only loads an already-exported ONNX model and a tokenizer, so it
+# never touches them (src/utils.py imports torch lazily, inside functions,
+# specifically so this works). Skipping them keeps the deployed image a
+# fraction of the size of a full PyTorch install -- much friendlier to a
+# free-tier host's build time, image size, and memory limits.
+#
+# For local training, keep using the full requirements.txt instead.
+
+gradio>=4.31.0
+numpy>=1.24.0
+onnxruntime>=1.18.0
+transformers>=4.40.0,<6.0.0
+tokenizers>=0.19.0
+pyyaml>=6.0.1
+python-dotenv>=1.0.1
