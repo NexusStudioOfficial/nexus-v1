@@ -17,6 +17,7 @@ Run directly:
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -234,6 +235,23 @@ def run_onnx_inference(
     tokenizer = PreTrainedTokenizerFast.from_pretrained(str(export_path))
     session = load_onnx_session(onnx_path, device_override=device_override)
 
+    # Read the model's actual max context length from its exported config.json
+    # (models/export/config.json) instead of relying on onnx_generate's 512
+    # default -- that default silently under-uses the model whenever the
+    # architecture's max_position_embeddings differs from 512 (e.g. after
+    # increasing it in config.yaml), truncating context earlier than the
+    # model actually supports.
+    try:
+        with open(export_path / "config.json", "r", encoding="utf-8") as f:
+            exported_config = json.load(f)
+        max_position_embeddings = exported_config["max_position_embeddings"]
+    except Exception:
+        logger.warning(
+            "Could not read max_position_embeddings from the exported config.json; "
+            "falling back to onnx_generate's default of 512."
+        )
+        max_position_embeddings = 512
+
     return onnx_generate(
         session=session,
         tokenizer=tokenizer,
@@ -243,6 +261,7 @@ def run_onnx_inference(
         top_p=top_p,
         top_k=top_k,
         repetition_penalty=repetition_penalty,
+        max_position_embeddings=max_position_embeddings,
     )
 
 

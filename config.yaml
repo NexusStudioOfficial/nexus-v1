@@ -8,11 +8,11 @@ model:
   name: "nexus-v1"
   architecture: "nexus-causal-lm"       # custom architecture identifier stored in config.json
   vocab_size: 8000                      # tokenizer vocabulary size
-  hidden_size: 256                      # embedding / hidden dimension
-  num_hidden_layers: 6                  # number of transformer decoder blocks
-  num_attention_heads: 8                # must evenly divide hidden_size
-  intermediate_size: 1024               # feed-forward inner dimension
-  max_position_embeddings: 512          # max sequence length the model supports
+  hidden_size: 384                      # embedding / hidden dimension (was 256)
+  num_hidden_layers: 8                  # number of transformer decoder blocks (was 6)
+  num_attention_heads: 8                # must evenly divide hidden_size (384 / 8 = 48 per head)
+  intermediate_size: 1536               # feed-forward inner dimension (was 1024)
+  max_position_embeddings: 1024         # max sequence length the model supports (was 512)
   dropout: 0.1
   attention_dropout: 0.1
   layer_norm_eps: 1.0e-5
@@ -38,7 +38,7 @@ dataset:
   text_field: "text"                    # or use prompt/completion pair fields below
   prompt_field: "prompt"
   completion_field: "completion"
-  max_seq_length: 128
+  max_seq_length: 256                   # was 128; headroom for longer Luau snippets as the dataset grows
   val_split_ratio: 0.1
   seed: 42
 

@@ -19,16 +19,30 @@ env/
 .ipynb_checkpoints/
 
 # Model artifacts & weights (large binary files)
+# models/checkpoints/ is training output only (not needed at runtime) --
+# keep ignoring it, it can be huge.
 models/checkpoints/*
 !models/checkpoints/.gitkeep
-models/export/*
-!models/export/.gitkeep
+
+# models/export/ IS needed at runtime by app/app.py (the ONNX model +
+# tokenizer the deployed app loads), so it must NOT be ignored, even
+# though it contains .onnx files that would otherwise match the *.onnx
+# rule below.
+!models/export/
+!models/export/*
+
+# Training checkpoint formats (still ignored everywhere, e.g. under
+# models/checkpoints/) -- but explicitly allow the ones actually inside
+# models/export/, since a blanket *.onnx rule would otherwise re-hide the
+# files we just un-ignored above.
 *.pt
 *.pth
 *.ckpt
 *.safetensors
 *.onnx
 *.bin
+!models/export/*.onnx
+!models/export/*.safetensors
 
 # Processed / cached data
 data/processed/*

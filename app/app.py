@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -88,7 +89,9 @@ def load_playground_assets() -> tuple[ort.InferenceSession, PreTrainedTokenizerF
     the quantized INT8 model for faster CPU inference and smaller memory usage.
 
     Returns:
-        Tuple of (onnx_session, tokenizer, inference_config).
+        Tuple of (onnx_session, tokenizer, inference_config). inference_config
+        is config.yaml's contents, but with config["model"] replaced by the
+        exported model's own config.json -- see the note below.
 
     Raises:
         FileNotFoundError: If no exported ONNX model can be found.
@@ -115,6 +118,25 @@ def load_playground_assets() -> tuple[ort.InferenceSession, PreTrainedTokenizerF
     session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
     tokenizer = PreTrainedTokenizerFast.from_pretrained(str(export_dir))
 
+    # Use the ACTUAL exported model's architecture (models/export/config.json)
+    # for anything that must match the ONNX graph in model_path -- not
+    # config.yaml's model section. config.yaml describes what src/train.py
+    # will build the *next* time it runs; it can drift out of sync with
+    # whatever was last trained + exported (e.g. right after editing
+    # hidden_size/max_position_embeddings in config.yaml but before
+    # re-running train + export_onnx). Reading it back from config.json
+    # guarantees this app always reflects the model it actually loaded.
+    try:
+        with open(export_dir / "config.json", "r", encoding="utf-8") as f:
+            exported_model_config = json.load(f)
+        config["model"] = exported_model_config
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as exc:
+        logger.warning(
+            f"Could not read exported config.json from '{export_dir}' ({exc}); "
+            f"falling back to config.yaml's model section, which may not match "
+            f"the actually-loaded ONNX model."
+        )
+
     logger.info("nexus-v1 playground assets loaded successfully.")
     return session, tokenizer, config
 
@@ -122,6 +144,11 @@ def load_playground_assets() -> tuple[ort.InferenceSession, PreTrainedTokenizerF
 try:
     ONNX_SESSION, TOKENIZER, CONFIG = load_playground_assets()
     MODEL_MAX_POSITION_EMBEDDINGS: int = CONFIG["model"]["max_position_embeddings"]
+    # "name" is a config.yaml-only convenience field, not part of the HF-style
+    # config.json schema written by export_onnx.py, so it won't be present
+    # after load_playground_assets() swaps config["model"] for config.json's
+    # contents. Falls back to the project's fixed name, which is what
+    # config.yaml's model.name has always been set to anyway.
     ACTIVE_MODEL_NAME: str = CONFIG.get("model", {}).get("name", "nexus-v1")
     LOAD_ERROR: Optional[str] = None
 except Exception as exc:  # noqa: BLE001 - surface any load failure inside the UI itself
@@ -311,7 +338,7 @@ def build_interface() -> gr.Blocks:
             # examples/footer above and below it makes the *page* taller
             # than the viewport too, so you end up with two nested
             # scrollbars (the chat log's own, plus the browser page's).
-            chatbot=gr.Chatbot(height=480, show_copy_button=True),
+            chatbot=gr.Chatbot(height=480),
             additional_inputs=[
                 gr.Slider(
                     minimum=1,

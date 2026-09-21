@@ -21,7 +21,7 @@ pyyaml>=6.0.1
 python-dotenv>=1.0.1
 
 # UI / Playground
-gradio>=4.31.0
+gradio>=6.0.0
 
 # Utilities
 tqdm>=4.66.0
