@@ -503,15 +503,28 @@ def _port_is_free(host: str, port: int) -> tuple[bool, Optional[str]]:
         logic kept reporting ports as "occupied" even when scanning 20
         ports in a row all failed identically, a pattern real port
         conflicts don't produce but a blanket bind restriction does.
+
+    Note: host is assumed to already be normalized (see
+    _normalize_server_name) -- no brackets, since raw bracketed IPv6
+    strings like "[::]" aren't valid socket.bind() addresses and would
+    themselves cause a spurious DNS-resolution-looking failure here.
     """
-    probe_host = "127.0.0.1" if host == "0.0.0.0" else host
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    is_ipv6 = ":" in host
+    if is_ipv6:
+        probe_host = "::1" if host == "::" else host
+        family = socket.AF_INET6
+    else:
+        probe_host = "127.0.0.1" if host == "0.0.0.0" else host
+        family = socket.AF_INET
+    with socket.socket(family, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind((probe_host, port))
             return True, None
         except OSError as exc:
             return False, f"{exc.strerror or exc} (errno={exc.errno})"
+        except socket.gaierror as exc:
+            return False, f"{exc} (address resolution failed)"
 
 
 def _find_available_port(host: str, preferred_port: int, max_scan: int = 20) -> tuple[int, Optional[str]]:
@@ -532,12 +545,36 @@ def _find_available_port(host: str, preferred_port: int, max_scan: int = 20) -> 
     return preferred_port, first_error
 
 
+def _normalize_server_name(raw: str) -> str:
+    """
+    Normalize a bind-address env var into something socket.bind()/uvicorn
+    will actually accept.
+
+    Railway (and some other platforms) inject networking env vars using the
+    bracketed URL notation for IPv6 -- "[::]" -- because that's the correct
+    form inside a URL (http://[::]:8080/). But "[::]" is NOT a valid value
+    to hand directly to socket.bind() or uvicorn's host= parameter: those
+    expect the bare address "::" (IPv6 wildcard, binds all interfaces on
+    both IPv4 and IPv6) or "0.0.0.0" (IPv4-only wildcard). Passed literally,
+    the brackets make the OS treat "[::]" as a hostname to resolve via DNS,
+    which fails with "Name or service not known" (errno -2) -- the exact
+    failure seen in this project's logs. This mirrors a known, documented
+    Railway gotcha (apps built assuming an unbracketed HOST value break the
+    same way). Stripping the brackets here makes the app work whether the
+    platform hands us "0.0.0.0", "::", or "[::]".
+    """
+    stripped = raw.strip()
+    if stripped.startswith("[") and stripped.endswith("]"):
+        return stripped[1:-1]
+    return stripped
+
+
 if __name__ == "__main__":
     signal.signal(signal.SIGTERM, _handle_sigterm)
 
     interface = build_interface()
 
-    server_name = os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1")
+    server_name = _normalize_server_name(os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"))
     requested_port = int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", 7860)))
 
     # theme= and css= live here (not in gr.Blocks()) as of Gradio 6.0.
