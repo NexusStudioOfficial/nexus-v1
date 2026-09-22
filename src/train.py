@@ -204,6 +204,20 @@ def train(config: Optional[dict[str, Any]] = None) -> Path:
     device = get_device()
 
     train_loader, val_loader, tokenizer = build_dataloaders(config)
+
+    num_train_examples = len(train_loader.dataset)
+    if num_train_examples < 50:
+        logger.warning(
+            f"Only {num_train_examples} training examples found. A transformer "
+            f"trained on a dataset this small will memorize it almost "
+            f"immediately -- validation loss will stop improving within the "
+            f"first few dozen steps, early stopping will trigger, and the "
+            f"model will NOT generalize or produce coherent text on new "
+            f"prompts. This is expected behavior, not a bug. To get a model "
+            f"that actually works, replace data/raw/sample.json with a real "
+            f"dataset of at least several thousand examples (see README.md)."
+        )
+
     # Always build the model against the tokenizer's real vocab size (see
     # build_model's docstring) rather than blindly trusting config.yaml.
     model = build_model(config, actual_vocab_size=tokenizer.vocab_size).to(device)
@@ -292,8 +306,21 @@ def train(config: Optional[dict[str, Any]] = None) -> Path:
 
                     if patience_counter >= early_stopping_patience:
                         logger.info(
-                            f"Early stopping triggered after {patience_counter} evaluations "
-                            f"without improvement."
+                            f"=== EARLY STOPPING (this is a normal, successful exit -- "
+                            f"NOT a crash or interruption) ===\n"
+                            f"Validation loss failed to improve for {patience_counter} "
+                            f"consecutive evaluations (checked every "
+                            f"{training_cfg.get('eval_every_n_steps', 50)} steps), so "
+                            f"training stopped at global_step={global_step} "
+                            f"(out of a planned {num_training_steps}). This is the "
+                            f"early_stopping_patience={early_stopping_patience} setting "
+                            f"in config.yaml doing its job: it saves time/compute once "
+                            f"further training stops helping. If you WANT it to run all "
+                            f"the way to the configured num_epochs regardless, raise "
+                            f"early_stopping_patience in config.yaml (or set it to a very "
+                            f"large number), but note that with a small dataset this "
+                            f"almost never produces a better model -- it just keeps "
+                            f"training on the same few examples."
                         )
                         _finalize_training(model, tokenizer, checkpoint_dir, best_val_loss, start_time)
                         return resolve_path(checkpoint_dir) / "best_model"

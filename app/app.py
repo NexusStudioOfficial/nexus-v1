@@ -417,14 +417,59 @@ def build_interface() -> gr.Blocks:
 
 if __name__ == "__main__":
     interface = build_interface()
+
+    server_name = os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1")
+    requested_port = int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", 7860)))
+
     # theme= and css= live here (not in gr.Blocks()) as of Gradio 6.0.
     # server_name/server_port: default to localhost:7860 for local runs;
     # hosting platforms like Render/Railway inject $PORT and expect the app
     # to bind to 0.0.0.0, so those environment variables override the
     # defaults automatically in that environment (see Dockerfile).
+    #
+    # Railway/Render sometimes start a new container instance before the
+    # previous one has fully released its port (a slow shutdown, an
+    # overlapping redeploy, or a container that was killed without a clean
+    # SIGTERM handler running). When that happens Gradio's own port-picking
+    # logic still fails because we're explicitly pinning a single port
+    # (server_port=requested_port leaves it no room to pick another one).
+    # To make restarts self-healing instead of crash-looping forever, we
+    # retry a few times with a short backoff -- giving the old process time
+    # to actually die and free the socket -- before giving up loudly.
+    import socket
+    import time
+
+    def _port_is_free(port: int) -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                s.bind((server_name if server_name != "0.0.0.0" else "0.0.0.0", port))
+                return True
+            except OSError:
+                return False
+
+    max_attempts = 6
+    wait_seconds = 5
+    for attempt in range(1, max_attempts + 1):
+        if _port_is_free(requested_port):
+            break
+        logger.warning(
+            f"Port {requested_port} is still occupied (likely a previous "
+            f"instance still shutting down). Retry {attempt}/{max_attempts} "
+            f"in {wait_seconds}s..."
+        )
+        time.sleep(wait_seconds)
+    else:
+        logger.error(
+            f"Port {requested_port} did not free up after {max_attempts} "
+            f"retries. If this keeps happening on every deploy, check your "
+            f"hosting platform's health-check / restart settings -- the old "
+            f"container process may not be receiving or handling SIGTERM."
+        )
+
     interface.launch(
         theme=gr.themes.Soft(),
         css=CUSTOM_CSS,
-        server_name=os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"),
-        server_port=int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", 7860))),
+        server_name=server_name,
+        server_port=requested_port,
     )

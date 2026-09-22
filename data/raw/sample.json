@@ -4,31 +4,431 @@
     "completion": "local function add(a: number, b: number): number\n\treturn a + b\nend"
   },
   {
+    "prompt": "Write a Luau function that subtracts two numbers.",
+    "completion": "local function subtract(a: number, b: number): number\n\treturn a - b\nend"
+  },
+  {
+    "prompt": "Write a Luau function that multiplies two numbers.",
+    "completion": "local function multiply(a: number, b: number): number\n\treturn a * b\nend"
+  },
+  {
+    "prompt": "Write a Luau function that divides two numbers safely, returning nil if dividing by zero.",
+    "completion": "local function safeDivide(a: number, b: number): number?\n\tif b == 0 then\n\t\treturn nil\n\tend\n\treturn a / b\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a number is even.",
+    "completion": "local function isEven(n: number): boolean\n\treturn n % 2 == 0\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a number is odd.",
+    "completion": "local function isOdd(n: number): boolean\n\treturn n % 2 ~= 0\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the absolute value of a number.",
+    "completion": "local function absValue(n: number): number\n\treturn math.abs(n)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that clamps a number between a minimum and maximum value.",
+    "completion": "local function clampValue(value: number, minValue: number, maxValue: number): number\n\treturn math.clamp(value, minValue, maxValue)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the factorial of a number using recursion.",
+    "completion": "local function factorial(n: number): number\n\tif n <= 1 then\n\t\treturn 1\n\tend\n\treturn n * factorial(n - 1)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a number is prime.",
+    "completion": "local function isPrime(n: number): boolean\n\tif n < 2 then\n\t\treturn false\n\tend\n\tfor i = 2, math.floor(math.sqrt(n)) do\n\t\tif n % i == 0 then\n\t\t\treturn false\n\t\tend\n\tend\n\treturn true\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the nth Fibonacci number using recursion.",
+    "completion": "local function fibonacci(n: number): number\n\tif n <= 1 then\n\t\treturn n\n\tend\n\treturn fibonacci(n - 1) + fibonacci(n - 2)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that rounds a number to the nearest integer.",
+    "completion": "local function roundNumber(n: number): number\n\treturn math.round(n)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the greatest common divisor of two numbers.",
+    "completion": "local function gcd(a: number, b: number): number\n\twhile b ~= 0 do\n\t\ta, b = b, a % b\n\tend\n\treturn a\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the least common multiple of two numbers.",
+    "completion": "local function lcm(a: number, b: number): number\n\tlocal function gcd(x: number, y: number): number\n\t\twhile y ~= 0 do\n\t\t\tx, y = y, x % y\n\t\tend\n\t\treturn x\n\tend\n\treturn (a * b) / gcd(a, b)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that converts degrees to radians.",
+    "completion": "local function degreesToRadians(degrees: number): number\n\treturn degrees * (math.pi / 180)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that converts radians to degrees.",
+    "completion": "local function radiansToDegrees(radians: number): number\n\treturn radians * (180 / math.pi)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that linearly interpolates between two numbers.",
+    "completion": "local function lerp(a: number, b: number, t: number): number\n\treturn a + (b - a) * t\nend"
+  },
+  {
     "prompt": "Create a Luau function to check if a table is empty.",
     "completion": "local function isEmpty(t: {any}): boolean\n\treturn next(t) == nil\nend"
-  },
-  {
-    "prompt": "Write a Luau script that prints numbers from 1 to 5 using a for loop.",
-    "completion": "for i = 1, 5 do\n\tprint(i)\nend"
-  },
-  {
-    "prompt": "Create a Luau class-like module using a metatable for a Player object.",
-    "completion": "local Player = {}\nPlayer.__index = Player\n\nfunction Player.new(name: string, health: number)\n\tlocal self = setmetatable({}, Player)\n\tself.name = name\n\tself.health = health\n\treturn self\nend\n\nfunction Player:takeDamage(amount: number)\n\tself.health = math.max(0, self.health - amount)\nend\n\nreturn Player"
   },
   {
     "prompt": "Write a Luau function that returns the maximum value in an array.",
     "completion": "local function findMax(values: {number}): number\n\tlocal max = values[1]\n\tfor _, v in ipairs(values) do\n\t\tif v > max then\n\t\t\tmax = v\n\t\tend\n\tend\n\treturn max\nend"
   },
   {
-    "prompt": "Create a Luau RemoteEvent handler on the server that listens for a client request.",
-    "completion": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal remoteEvent = ReplicatedStorage:WaitForChild(\"MyRemoteEvent\")\n\nremoteEvent.OnServerEvent:Connect(function(player: Player, data: any)\n\tprint(player.Name .. \" sent: \", data)\nend)"
+    "prompt": "Write a Luau function that returns the minimum value in an array.",
+    "completion": "local function findMin(values: {number}): number\n\tlocal min = values[1]\n\tfor _, v in ipairs(values) do\n\t\tif v < min then\n\t\t\tmin = v\n\t\tend\n\tend\n\treturn min\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the sum of all numbers in an array.",
+    "completion": "local function sumArray(values: {number}): number\n\tlocal total = 0\n\tfor _, v in ipairs(values) do\n\t\ttotal += v\n\tend\n\treturn total\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the average of numbers in an array.",
+    "completion": "local function averageArray(values: {number}): number\n\tlocal total = 0\n\tfor _, v in ipairs(values) do\n\t\ttotal += v\n\tend\n\treturn total / #values\nend"
+  },
+  {
+    "prompt": "Write a Luau function that reverses an array in place.",
+    "completion": "local function reverseArray(arr: {any})\n\tlocal left, right = 1, #arr\n\twhile left < right do\n\t\tarr[left], arr[right] = arr[right], arr[left]\n\t\tleft += 1\n\t\tright -= 1\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that shuffles an array using the Fisher-Yates algorithm.",
+    "completion": "local function shuffleArray(arr: {any})\n\tfor i = #arr, 2, -1 do\n\t\tlocal j = math.random(i)\n\t\tarr[i], arr[j] = arr[j], arr[i]\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a table contains a given value.",
+    "completion": "local function tableContains(t: {any}, value: any): boolean\n\tfor _, v in ipairs(t) do\n\t\tif v == value then\n\t\t\treturn true\n\t\tend\n\tend\n\treturn false\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns the index of a value in a table, or nil if not found.",
+    "completion": "local function indexOf(t: {any}, value: any): number?\n\tfor i, v in ipairs(t) do\n\t\tif v == value then\n\t\t\treturn i\n\t\tend\n\tend\n\treturn nil\nend"
+  },
+  {
+    "prompt": "Write a Luau function that removes duplicate values from an array.",
+    "completion": "local function removeDuplicates(arr: {any}): {any}\n\tlocal seen = {}\n\tlocal result = {}\n\tfor _, v in ipairs(arr) do\n\t\tif not seen[v] then\n\t\t\tseen[v] = true\n\t\t\ttable.insert(result, v)\n\t\tend\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that merges two arrays into a new array.",
+    "completion": "local function mergeArrays(a: {any}, b: {any}): {any}\n\tlocal result = table.clone(a)\n\tfor _, v in ipairs(b) do\n\t\ttable.insert(result, v)\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that filters an array using a predicate function.",
+    "completion": "local function filterArray(arr: {any}, predicate: (any) -> boolean): {any}\n\tlocal result = {}\n\tfor _, v in ipairs(arr) do\n\t\tif predicate(v) then\n\t\t\ttable.insert(result, v)\n\t\tend\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that maps an array to a new array using a transform function.",
+    "completion": "local function mapArray(arr: {any}, transform: (any) -> any): {any}\n\tlocal result = {}\n\tfor i, v in ipairs(arr) do\n\t\tresult[i] = transform(v)\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that reduces an array to a single value using an accumulator function.",
+    "completion": "local function reduceArray(arr: {any}, reducer: (any, any) -> any, initial: any): any\n\tlocal accumulator = initial\n\tfor _, v in ipairs(arr) do\n\t\taccumulator = reducer(accumulator, v)\n\tend\n\treturn accumulator\nend"
+  },
+  {
+    "prompt": "Write a Luau function that deep copies a table.",
+    "completion": "local function deepCopy(original: {[any]: any}): {[any]: any}\n\tlocal copy = {}\n\tfor k, v in pairs(original) do\n\t\tif type(v) == \"table\" then\n\t\t\tcopy[k] = deepCopy(v)\n\t\telse\n\t\t\tcopy[k] = v\n\t\tend\n\tend\n\treturn copy\nend"
+  },
+  {
+    "prompt": "Write a Luau function that counts the number of keys in a dictionary-style table.",
+    "completion": "local function countKeys(t: {[any]: any}): number\n\tlocal count = 0\n\tfor _ in pairs(t) do\n\t\tcount += 1\n\tend\n\treturn count\nend"
+  },
+  {
+    "prompt": "Write a Luau function that picks a random element from an array.",
+    "completion": "local function randomElement(arr: {any}): any\n\treturn arr[math.random(1, #arr)]\nend"
+  },
+  {
+    "prompt": "Write a Luau function that sorts an array of numbers in ascending order.",
+    "completion": "local function sortAscending(arr: {number}): {number}\n\ttable.sort(arr, function(a, b)\n\t\treturn a < b\n\tend)\n\treturn arr\nend"
+  },
+  {
+    "prompt": "Write a Luau function that sorts an array of numbers in descending order.",
+    "completion": "local function sortDescending(arr: {number}): {number}\n\ttable.sort(arr, function(a, b)\n\t\treturn a > b\n\tend)\n\treturn arr\nend"
+  },
+  {
+    "prompt": "Write a Luau function that flattens a nested array by one level.",
+    "completion": "local function flattenArray(arr: {{any}}): {any}\n\tlocal result = {}\n\tfor _, inner in ipairs(arr) do\n\t\tfor _, v in ipairs(inner) do\n\t\t\ttable.insert(result, v)\n\t\tend\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that returns a slice of an array between two indices.",
+    "completion": "local function sliceArray(arr: {any}, startIndex: number, endIndex: number): {any}\n\tlocal result = {}\n\tfor i = startIndex, endIndex do\n\t\ttable.insert(result, arr[i])\n\tend\n\treturn result\nend"
   },
   {
     "prompt": "Write a Luau function that reverses a string.",
     "completion": "local function reverseString(input: string): string\n\treturn string.reverse(input)\nend"
   },
   {
+    "prompt": "Write a Luau function that checks if a string is a palindrome.",
+    "completion": "local function isPalindrome(input: string): boolean\n\tlocal lowered = string.lower(input)\n\treturn lowered == string.reverse(lowered)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that capitalizes the first letter of a string.",
+    "completion": "local function capitalize(input: string): string\n\treturn string.upper(string.sub(input, 1, 1)) .. string.sub(input, 2)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that splits a string by a delimiter into a table.",
+    "completion": "local function splitString(input: string, delimiter: string): {string}\n\tlocal result = {}\n\tfor part in string.gmatch(input, \"([^\" .. delimiter .. \"]+)\") do\n\t\ttable.insert(result, part)\n\tend\n\treturn result\nend"
+  },
+  {
+    "prompt": "Write a Luau function that trims whitespace from both ends of a string.",
+    "completion": "local function trimString(input: string): string\n\treturn input:match(\"^%s*(.-)%s*$\")\nend"
+  },
+  {
+    "prompt": "Write a Luau function that counts the number of occurrences of a substring in a string.",
+    "completion": "local function countOccurrences(input: string, substring: string): number\n\tlocal count = 0\n\tfor _ in string.gmatch(input, substring) do\n\t\tcount += 1\n\tend\n\treturn count\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a string starts with a given prefix.",
+    "completion": "local function startsWith(input: string, prefix: string): boolean\n\treturn string.sub(input, 1, #prefix) == prefix\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a string ends with a given suffix.",
+    "completion": "local function endsWith(input: string, suffix: string): boolean\n\treturn string.sub(input, -#suffix) == suffix\nend"
+  },
+  {
+    "prompt": "Write a Luau function that replaces all occurrences of a substring in a string.",
+    "completion": "local function replaceAll(input: string, target: string, replacement: string): string\n\treturn (string.gsub(input, target, replacement))\nend"
+  },
+  {
+    "prompt": "Write a Luau function that joins a table of strings into one string with a separator.",
+    "completion": "local function joinStrings(parts: {string}, separator: string): string\n\treturn table.concat(parts, separator)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that repeats a string a given number of times.",
+    "completion": "local function repeatString(input: string, times: number): string\n\treturn string.rep(input, times)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that counts the number of words in a string.",
+    "completion": "local function countWords(input: string): number\n\tlocal count = 0\n\tfor _ in string.gmatch(input, \"%S+\") do\n\t\tcount += 1\n\tend\n\treturn count\nend"
+  },
+  {
+    "prompt": "Write a Luau function that converts a string to title case.",
+    "completion": "local function toTitleCase(input: string): string\n\treturn string.gsub(input, \"(%a)([%w']*)\", function(first, rest)\n\t\treturn string.upper(first) .. string.lower(rest)\n\tend)\nend"
+  },
+  {
+    "prompt": "Write a Luau script that prints numbers from 1 to 5 using a for loop.",
+    "completion": "for i = 1, 5 do\n\tprint(i)\nend"
+  },
+  {
+    "prompt": "Write a Luau script that prints numbers from 10 down to 1 using a for loop.",
+    "completion": "for i = 10, 1, -1 do\n\tprint(i)\nend"
+  },
+  {
+    "prompt": "Write a Luau script that prints only even numbers from 1 to 20.",
+    "completion": "for i = 1, 20 do\n\tif i % 2 == 0 then\n\t\tprint(i)\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau script that uses a while loop to print numbers until a counter reaches 10.",
+    "completion": "local counter = 0\nwhile counter < 10 do\n\tprint(counter)\n\tcounter += 1\nend"
+  },
+  {
+    "prompt": "Write a Luau script that uses a repeat-until loop to roll a die until it lands on 6.",
+    "completion": "local roll\nrepeat\n\troll = math.random(1, 6)\n\tprint(\"Rolled: \" .. roll)\nuntil roll == 6"
+  },
+  {
+    "prompt": "Write a Luau function that uses a for loop to build a multiplication table for a given number.",
+    "completion": "local function multiplicationTable(n: number): {number}\n\tlocal table_ = {}\n\tfor i = 1, 10 do\n\t\ttable_[i] = n * i\n\tend\n\treturn table_\nend"
+  },
+  {
+    "prompt": "Write a Luau script that iterates over a dictionary and prints each key-value pair.",
+    "completion": "local data = {name = \"Player1\", level = 5, health = 100}\nfor key, value in pairs(data) do\n\tprint(key, value)\nend"
+  },
+  {
+    "prompt": "Create a Luau class-like module using a metatable for a Player object.",
+    "completion": "local Player = {}\nPlayer.__index = Player\n\nfunction Player.new(name: string, health: number)\n\tlocal self = setmetatable({}, Player)\n\tself.name = name\n\tself.health = health\n\treturn self\nend\n\nfunction Player:takeDamage(amount: number)\n\tself.health = math.max(0, self.health - amount)\nend\n\nreturn Player"
+  },
+  {
+    "prompt": "Create a Luau class-like module for an Inventory system using a metatable.",
+    "completion": "local Inventory = {}\nInventory.__index = Inventory\n\nfunction Inventory.new()\n\tlocal self = setmetatable({}, Inventory)\n\tself.items = {}\n\treturn self\nend\n\nfunction Inventory:addItem(item: string)\n\ttable.insert(self.items, item)\nend\n\nfunction Inventory:removeItem(item: string)\n\tlocal index = table.find(self.items, item)\n\tif index then\n\t\ttable.remove(self.items, index)\n\tend\nend\n\nreturn Inventory"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a Vector2 object with an add method.",
+    "completion": "local Vector2 = {}\nVector2.__index = Vector2\n\nfunction Vector2.new(x: number, y: number)\n\tlocal self = setmetatable({}, Vector2)\n\tself.x = x\n\tself.y = y\n\treturn self\nend\n\nfunction Vector2:add(other): typeof(Vector2.new(0, 0))\n\treturn Vector2.new(self.x + other.x, self.y + other.y)\nend\n\nreturn Vector2"
+  },
+  {
+    "prompt": "Create a Luau class-like module for an Enemy with health and attack methods.",
+    "completion": "local Enemy = {}\nEnemy.__index = Enemy\n\nfunction Enemy.new(name: string, health: number, damage: number)\n\tlocal self = setmetatable({}, Enemy)\n\tself.name = name\n\tself.health = health\n\tself.damage = damage\n\treturn self\nend\n\nfunction Enemy:attack(target)\n\ttarget.health -= self.damage\nend\n\nfunction Enemy:isAlive(): boolean\n\treturn self.health > 0\nend\n\nreturn Enemy"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a BankAccount with deposit and withdraw methods.",
+    "completion": "local BankAccount = {}\nBankAccount.__index = BankAccount\n\nfunction BankAccount.new(startingBalance: number)\n\tlocal self = setmetatable({}, BankAccount)\n\tself.balance = startingBalance\n\treturn self\nend\n\nfunction BankAccount:deposit(amount: number)\n\tself.balance += amount\nend\n\nfunction BankAccount:withdraw(amount: number): boolean\n\tif amount > self.balance then\n\t\treturn false\n\tend\n\tself.balance -= amount\n\treturn true\nend\n\nreturn BankAccount"
+  },
+  {
+    "prompt": "Create a Luau module that implements a simple state machine using a table of states.",
+    "completion": "local StateMachine = {}\nStateMachine.__index = StateMachine\n\nfunction StateMachine.new(initialState: string)\n\tlocal self = setmetatable({}, StateMachine)\n\tself.currentState = initialState\n\tself.states = {}\n\treturn self\nend\n\nfunction StateMachine:addState(name: string, onEnter: () -> ())\n\tself.states[name] = onEnter\nend\n\nfunction StateMachine:transitionTo(name: string)\n\tself.currentState = name\n\tif self.states[name] then\n\t\tself.states[name]()\n\tend\nend\n\nreturn StateMachine"
+  },
+  {
+    "prompt": "Create a Luau RemoteEvent handler on the server that listens for a client request.",
+    "completion": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal remoteEvent = ReplicatedStorage:WaitForChild(\"MyRemoteEvent\")\n\nremoteEvent.OnServerEvent:Connect(function(player: Player, data: any)\n\tprint(player.Name .. \" sent: \", data)\nend)"
+  },
+  {
+    "prompt": "Write a Luau script that fires a RemoteEvent from the client to the server.",
+    "completion": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal remoteEvent = ReplicatedStorage:WaitForChild(\"MyRemoteEvent\")\n\nremoteEvent:FireServer(\"Hello from client\")"
+  },
+  {
+    "prompt": "Write a Luau script that connects to the PlayerAdded event and prints a welcome message.",
+    "completion": "local Players = game:GetService(\"Players\")\n\nPlayers.PlayerAdded:Connect(function(player: Player)\n\tprint(\"Welcome, \" .. player.Name .. \"!\")\nend)"
+  },
+  {
+    "prompt": "Write a Luau script that connects to the PlayerRemoving event and prints a goodbye message.",
+    "completion": "local Players = game:GetService(\"Players\")\n\nPlayers.PlayerRemoving:Connect(function(player: Player)\n\tprint(player.Name .. \" has left the game.\")\nend)"
+  },
+  {
+    "prompt": "Write a Luau script that detects when a part is touched and prints the toucher's name.",
+    "completion": "local part = script.Parent\n\npart.Touched:Connect(function(hit: BasePart)\n\tlocal character = hit.Parent\n\tif character and character:FindFirstChild(\"Humanoid\") then\n\t\tprint(character.Name .. \" touched the part!\")\n\tend\nend)"
+  },
+  {
+    "prompt": "Write a Luau script that changes a part's color when clicked using a ClickDetector.",
+    "completion": "local part = script.Parent\nlocal clickDetector = part:FindFirstChildOfClass(\"ClickDetector\")\n\nif clickDetector then\n\tclickDetector.MouseClick:Connect(function(player: Player)\n\t\tpart.Color = Color3.new(math.random(), math.random(), math.random())\n\tend)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a tool from ServerStorage.",
+    "completion": "local ServerStorage = game:GetService(\"ServerStorage\")\n\nlocal function giveTool(player: Player, toolName: string)\n\tlocal tool = ServerStorage:FindFirstChild(toolName)\n\tif tool then\n\t\ttool:Clone().Parent = player.Backpack\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau script that teleports a player's character to a specific position.",
+    "completion": "local function teleportPlayer(player: Player, position: Vector3)\n\tlocal character = player.Character\n\tif character then\n\t\tlocal humanoidRootPart = character:FindFirstChild(\"HumanoidRootPart\")\n\t\tif humanoidRootPart then\n\t\t\thumanoidRootPart.CFrame = CFrame.new(position)\n\t\tend\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that damages a humanoid and prints its remaining health.",
+    "completion": "local function damageHumanoid(humanoid: Humanoid, amount: number)\n\thumanoid:TakeDamage(amount)\n\tprint(\"Remaining health: \" .. humanoid.Health)\nend"
+  },
+  {
+    "prompt": "Write a Luau script that connects to a Humanoid's Died event and prints a message.",
+    "completion": "local function onCharacterAdded(character: Model)\n\tlocal humanoid = character:WaitForChild(\"Humanoid\") :: Humanoid\n\thumanoid.Died:Connect(function()\n\t\tprint(character.Name .. \" has died.\")\n\tend)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that finds and returns a player by their username.",
+    "completion": "local Players = game:GetService(\"Players\")\n\nlocal function getPlayerByName(username: string): Player?\n\treturn Players:FindFirstChild(username) :: Player?\nend"
+  },
+  {
+    "prompt": "Write a Luau script that uses BindableEvent to communicate between two server scripts.",
+    "completion": "local bindableEvent = Instance.new(\"BindableEvent\")\n\nbindableEvent.Event:Connect(function(message: string)\n\tprint(\"Received: \" .. message)\nend)\n\nbindableEvent:Fire(\"Hello from another script\")"
+  },
+  {
+    "prompt": "Write a Luau function that awards a leaderstat value to a player.",
+    "completion": "local function addPoints(player: Player, amount: number)\n\tlocal leaderstats = player:FindFirstChild(\"leaderstats\")\n\tif leaderstats then\n\t\tlocal points = leaderstats:FindFirstChild(\"Points\") :: IntValue\n\t\tif points then\n\t\t\tpoints.Value += amount\n\t\tend\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau script that sets up leaderstats with a Points value for each player.",
+    "completion": "local Players = game:GetService(\"Players\")\n\nPlayers.PlayerAdded:Connect(function(player: Player)\n\tlocal leaderstats = Instance.new(\"Folder\")\n\tleaderstats.Name = \"leaderstats\"\n\tleaderstats.Parent = player\n\n\tlocal points = Instance.new(\"IntValue\")\n\tpoints.Name = \"Points\"\n\tpoints.Value = 0\n\tpoints.Parent = leaderstats\nend)"
+  },
+  {
+    "prompt": "Write a Luau function that plays a sound from a part.",
+    "completion": "local function playSound(part: BasePart, soundId: string)\n\tlocal sound = Instance.new(\"Sound\")\n\tsound.SoundId = soundId\n\tsound.Parent = part\n\tsound:Play()\nend"
+  },
+  {
+    "prompt": "Write a Luau script that uses TweenService to fade a part's transparency.",
+    "completion": "local TweenService = game:GetService(\"TweenService\")\n\nlocal function fadePart(part: BasePart, duration: number)\n\tlocal tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)\n\tlocal tween = TweenService:Create(part, tweenInfo, {Transparency = 1})\n\ttween:Play()\nend"
+  },
+  {
+    "prompt": "Write a Luau script that spawns a part at a random position within a range.",
+    "completion": "local function spawnRandomPart(range: number): BasePart\n\tlocal part = Instance.new(\"Part\")\n\tpart.Position = Vector3.new(\n\t\tmath.random(-range, range),\n\t\t10,\n\t\tmath.random(-range, range)\n\t)\n\tpart.Parent = workspace\n\treturn part\nend"
+  },
+  {
+    "prompt": "Write a Luau function that checks if a player is currently in the workspace.",
+    "completion": "local function isPlayerInWorkspace(player: Player): boolean\n\treturn player.Character ~= nil and player.Character.Parent == workspace\nend"
+  },
+  {
+    "prompt": "Write a Luau script that uses UserInputService to detect when the space bar is pressed.",
+    "completion": "local UserInputService = game:GetService(\"UserInputService\")\n\nUserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)\n\tif not gameProcessed and input.KeyCode == Enum.KeyCode.Space then\n\t\tprint(\"Space bar pressed!\")\n\tend\nend)"
+  },
+  {
+    "prompt": "Write a Luau script that uses RunService.Heartbeat to update a value every frame.",
+    "completion": "local RunService = game:GetService(\"RunService\")\n\nlocal elapsedTime = 0\nRunService.Heartbeat:Connect(function(deltaTime: number)\n\telapsedTime += deltaTime\nend)"
+  },
+  {
+    "prompt": "Write a Luau function that saves player data using DataStoreService.",
+    "completion": "local DataStoreService = game:GetService(\"DataStoreService\")\nlocal playerDataStore = DataStoreService:GetDataStore(\"PlayerData\")\n\nlocal function savePlayerData(player: Player, data: any)\n\tlocal success, errorMessage = pcall(function()\n\t\tplayerDataStore:SetAsync(player.UserId, data)\n\tend)\n\tif not success then\n\t\twarn(\"Failed to save data: \" .. tostring(errorMessage))\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that loads player data using DataStoreService.",
+    "completion": "local DataStoreService = game:GetService(\"DataStoreService\")\nlocal playerDataStore = DataStoreService:GetDataStore(\"PlayerData\")\n\nlocal function loadPlayerData(player: Player): any\n\tlocal success, result = pcall(function()\n\t\treturn playerDataStore:GetAsync(player.UserId)\n\tend)\n\tif success then\n\t\treturn result\n\tend\n\treturn nil\nend"
+  },
+  {
     "prompt": "Create a simple Luau debounce function to prevent spamming an action.",
     "completion": "local function debounce(fn: () -> ()): () -> ()\n\tlocal isRunning = false\n\treturn function()\n\t\tif isRunning then\n\t\t\treturn\n\t\tend\n\t\tisRunning = true\n\t\tfn()\n\t\ttask.wait(1)\n\t\tisRunning = false\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that runs a callback after a delay using task.delay.",
+    "completion": "local function delayedCall(seconds: number, callback: () -> ())\n\ttask.delay(seconds, callback)\nend"
+  },
+  {
+    "prompt": "Write a Luau function that retries a function a given number of times until it succeeds.",
+    "completion": "local function retry(fn: () -> boolean, attempts: number): boolean\n\tfor _ = 1, attempts do\n\t\tif fn() then\n\t\t\treturn true\n\t\tend\n\tend\n\treturn false\nend"
+  },
+  {
+    "prompt": "Write a Luau function that wraps a function call in pcall and returns nil on error.",
+    "completion": "local function safeCall(fn: () -> any): any\n\tlocal success, result = pcall(fn)\n\tif success then\n\t\treturn result\n\tend\n\treturn nil\nend"
+  },
+  {
+    "prompt": "Write a Luau function that memoizes the result of an expensive function.",
+    "completion": "local function memoize(fn: (number) -> number): (number) -> number\n\tlocal cache = {}\n\treturn function(input: number): number\n\t\tif cache[input] == nil then\n\t\t\tcache[input] = fn(input)\n\t\tend\n\t\treturn cache[input]\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that creates a simple event emitter using tables.",
+    "completion": "local EventEmitter = {}\nEventEmitter.__index = EventEmitter\n\nfunction EventEmitter.new()\n\tlocal self = setmetatable({}, EventEmitter)\n\tself.listeners = {}\n\treturn self\nend\n\nfunction EventEmitter:on(eventName: string, callback: (...any) -> ())\n\tif not self.listeners[eventName] then\n\t\tself.listeners[eventName] = {}\n\tend\n\ttable.insert(self.listeners[eventName], callback)\nend\n\nfunction EventEmitter:emit(eventName: string, ...: any)\n\tif self.listeners[eventName] then\n\t\tfor _, callback in ipairs(self.listeners[eventName]) do\n\t\t\tcallback(...)\n\t\tend\n\tend\nend\n\nreturn EventEmitter"
+  },
+  {
+    "prompt": "Write a Luau function that implements a basic queue using a table.",
+    "completion": "local Queue = {}\nQueue.__index = Queue\n\nfunction Queue.new()\n\tlocal self = setmetatable({}, Queue)\n\tself.items = {}\n\treturn self\nend\n\nfunction Queue:enqueue(item: any)\n\ttable.insert(self.items, item)\nend\n\nfunction Queue:dequeue(): any\n\treturn table.remove(self.items, 1)\nend\n\nreturn Queue"
+  },
+  {
+    "prompt": "Write a Luau function that implements a basic stack using a table.",
+    "completion": "local Stack = {}\nStack.__index = Stack\n\nfunction Stack.new()\n\tlocal self = setmetatable({}, Stack)\n\tself.items = {}\n\treturn self\nend\n\nfunction Stack:push(item: any)\n\ttable.insert(self.items, item)\nend\n\nfunction Stack:pop(): any\n\treturn table.remove(self.items)\nend\n\nreturn Stack"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a Circle shape with an area calculation method.",
+    "completion": "local Circle = {}\nCircle.__index = Circle\n\nfunction Circle.new(size: number)\n\tlocal self = setmetatable({}, Circle)\n\tself.size = size\n\treturn self\nend\n\nfunction Circle:getArea(): number\n\treturn self.size * self.size\nend\n\nreturn Circle"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a Square shape with an area calculation method.",
+    "completion": "local Square = {}\nSquare.__index = Square\n\nfunction Square.new(size: number)\n\tlocal self = setmetatable({}, Square)\n\tself.size = size\n\treturn self\nend\n\nfunction Square:getArea(): number\n\treturn self.size * self.size\nend\n\nreturn Square"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a Triangle shape with an area calculation method.",
+    "completion": "local Triangle = {}\nTriangle.__index = Triangle\n\nfunction Triangle.new(size: number)\n\tlocal self = setmetatable({}, Triangle)\n\tself.size = size\n\treturn self\nend\n\nfunction Triangle:getArea(): number\n\treturn self.size * self.size\nend\n\nreturn Triangle"
+  },
+  {
+    "prompt": "Create a Luau class-like module for a Rectangle shape with an area calculation method.",
+    "completion": "local Rectangle = {}\nRectangle.__index = Rectangle\n\nfunction Rectangle.new(size: number)\n\tlocal self = setmetatable({}, Rectangle)\n\tself.size = size\n\treturn self\nend\n\nfunction Rectangle:getArea(): number\n\treturn self.size * self.size\nend\n\nreturn Rectangle"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a sword and prints a confirmation message.",
+    "completion": "local function giveSword(player: Player)\n\tlocal backpack = player:FindFirstChild(\"Backpack\")\n\tif backpack then\n\t\tprint(player.Name .. \" received a sword.\")\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a shield and prints a confirmation message.",
+    "completion": "local function giveShield(player: Player)\n\tlocal backpack = player:FindFirstChild(\"Backpack\")\n\tif backpack then\n\t\tprint(player.Name .. \" received a shield.\")\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a potion and prints a confirmation message.",
+    "completion": "local function givePotion(player: Player)\n\tlocal backpack = player:FindFirstChild(\"Backpack\")\n\tif backpack then\n\t\tprint(player.Name .. \" received a potion.\")\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a coin and prints a confirmation message.",
+    "completion": "local function giveCoin(player: Player)\n\tlocal backpack = player:FindFirstChild(\"Backpack\")\n\tif backpack then\n\t\tprint(player.Name .. \" received a coin.\")\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau function that gives a player a key and prints a confirmation message.",
+    "completion": "local function giveKey(player: Player)\n\tlocal backpack = player:FindFirstChild(\"Backpack\")\n\tif backpack then\n\t\tprint(player.Name .. \" received a key.\")\n\tend\nend"
+  },
+  {
+    "prompt": "Write a Luau script that gets the Lighting service.",
+    "completion": "local Lighting = game:GetService(\"Lighting\")"
+  },
+  {
+    "prompt": "Write a Luau script that gets the SoundService service.",
+    "completion": "local SoundService = game:GetService(\"SoundService\")"
+  },
+  {
+    "prompt": "Write a Luau script that gets the TeleportService service.",
+    "completion": "local TeleportService = game:GetService(\"TeleportService\")"
+  },
+  {
+    "prompt": "Write a Luau script that gets the MarketplaceService service.",
+    "completion": "local MarketplaceService = game:GetService(\"MarketplaceService\")"
+  },
+  {
+    "prompt": "Write a Luau script that gets the Chat service.",
+    "completion": "local Chat = game:GetService(\"Chat\")"
   }
 ]
