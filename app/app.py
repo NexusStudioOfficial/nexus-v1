@@ -489,40 +489,47 @@ def _handle_sigterm(signum, frame) -> None:
     sys.exit(0)
 
 
-def _port_is_free(host: str, port: int) -> bool:
-    """Best-effort check mirroring how Gradio itself probes the port."""
+def _port_is_free(host: str, port: int) -> tuple[bool, Optional[str]]:
+    """
+    Best-effort check mirroring how Gradio itself probes the port.
+
+    Returns:
+        (is_free, error_detail). error_detail is the raw OSError message
+        when the bind attempt fails, so callers can distinguish "something
+        else is really listening on this port" (errno EADDRINUSE) from a
+        permission/sandboxing problem (e.g. errno EACCES, or a network
+        policy blocking bind() outright) -- the previous version of this
+        check swallowed that distinction, which is why the retry/fallback
+        logic kept reporting ports as "occupied" even when scanning 20
+        ports in a row all failed identically, a pattern real port
+        conflicts don't produce but a blanket bind restriction does.
+    """
     probe_host = "127.0.0.1" if host == "0.0.0.0" else host
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind((probe_host, port))
-            return True
-        except OSError:
-            return False
+            return True, None
+        except OSError as exc:
+            return False, f"{exc.strerror or exc} (errno={exc.errno})"
 
 
-def _find_available_port(host: str, preferred_port: int, max_scan: int = 20) -> int:
+def _find_available_port(host: str, preferred_port: int, max_scan: int = 20) -> tuple[int, Optional[str]]:
     """
-    Return preferred_port if it's free; otherwise scan forward for the next
-    free port. This is the actual fix for "Cannot find empty port": rather
-    than retrying the same fixed port and eventually crashing if something
-    else never releases it (a stuck previous instance, a platform
-    reverse-proxy, or a genuinely different process on that port), the app
-    finds *a* usable port and starts there. Railway/Render route traffic to
-    whatever port the app reports it's listening on via their dashboards'
-    detected port, but when $PORT is fixed by the platform (the normal case)
-    this loop will find preferred_port free on the very first check and
-    behave exactly as before -- the fallback only kicks in when that
-    assumption breaks.
+    Return (port, error_detail). port is preferred_port if it's free,
+    otherwise the next free port found by scanning forward. error_detail
+    carries the OS-level reason for the *first* failed probe (on
+    preferred_port) so the caller can log something actionable instead of
+    a generic "occupied" guess -- see _port_is_free's docstring.
     """
-    for candidate in range(preferred_port, preferred_port + max_scan):
-        if _port_is_free(host, candidate):
-            return candidate
-    logger.warning(
-        f"No free port found in range {preferred_port}-{preferred_port + max_scan - 1}; "
-        f"falling back to {preferred_port} and letting Gradio raise its own error."
-    )
-    return preferred_port
+    first_error: Optional[str] = None
+    for offset, candidate in enumerate(range(preferred_port, preferred_port + max_scan)):
+        is_free, error_detail = _port_is_free(host, candidate)
+        if offset == 0 and error_detail is not None:
+            first_error = error_detail
+        if is_free:
+            return candidate, None
+    return preferred_port, first_error
 
 
 if __name__ == "__main__":
@@ -538,23 +545,72 @@ if __name__ == "__main__":
     # hosting platforms like Render/Railway inject $PORT and expect the app
     # to bind to 0.0.0.0, so those environment variables override the
     # defaults automatically in that environment (see Dockerfile).
-    actual_port = _find_available_port(server_name, requested_port)
-    if actual_port != requested_port:
-        logger.warning(
-            f"Requested port {requested_port} was not available (something "
-            f"else in this container is bound to it), so the app is starting "
-            f"on {actual_port} instead. If your hosting platform expects a "
-            f"specific port, update its configuration to route to {actual_port}, "
-            f"or investigate why {requested_port} is already occupied -- most "
-            f"often this means a previous instance of this same app is still "
-            f"running (check for duplicate deployments/replicas)."
-        )
+    #
+    # We do a *diagnostic* pre-check here (not a hard gate): identical bind
+    # failures across every port in a wide scanned range is not what a real
+    # "this one port is occupied" conflict looks like -- that only ever
+    # affects a single port. That pattern instead means bind() itself is
+    # being refused at the container/network level (a sandboxed network
+    # policy, a missing capability, a firewall rule), and no amount of
+    # picking a *different* port fixes that. In that situation, falling
+    # back to some other port is pointless -- it would fail identically --
+    # so we log the real OS error for diagnosis and still hand
+    # requested_port to Gradio, since that's the one port the hosting
+    # platform actually expects and routes to; a real, single-port
+    # conflict is the one case where trying a different port helps, so we
+    # only switch ports in that specific case.
+    actual_port = requested_port
+    is_free, bind_error = _port_is_free(server_name, requested_port)
+    if not is_free:
+        scanned_port, scan_error = _find_available_port(server_name, requested_port)
+        all_failed_identically = scan_error is not None and scan_error == bind_error
+        if all_failed_identically:
+            logger.warning(
+                f"Could not bind port {requested_port} ({bind_error}), and "
+                f"every other port checked up to {requested_port + 19} failed "
+                f"the exact same way. That pattern means bind() itself is "
+                f"being refused at the container/network level -- a "
+                f"sandboxed network policy, a missing capability, or a "
+                f"firewall rule -- not a stuck previous process on one "
+                f"port. Switching ports will not fix this, so staying on "
+                f"the platform-assigned port {requested_port} and letting "
+                f"Gradio's own startup attempt run; if it fails, check your "
+                f"hosting platform's network/sandbox settings (this is a "
+                f"platform-level restriction, not something app.py can "
+                f"work around)."
+            )
+        else:
+            actual_port = scanned_port
+            logger.warning(
+                f"Port {requested_port} was occupied by another process "
+                f"({bind_error}); starting on {actual_port} instead. If your "
+                f"hosting platform expects a specific port, update its "
+                f"routing to {actual_port}, or check for duplicate "
+                f"deployments/replicas still holding {requested_port}."
+            )
 
-    interface.launch(
-        theme=gr.themes.Soft(),
-        css=CUSTOM_CSS,
-        server_name=server_name,
-        server_port=actual_port,
-        favicon_path=None,
-        show_error=True,
-    )
+    try:
+        interface.launch(
+            theme=gr.themes.Soft(),
+            css=CUSTOM_CSS,
+            server_name=server_name,
+            server_port=actual_port,
+            favicon_path=None,
+            show_error=True,
+        )
+    except OSError as exc:
+        logger.error(
+            f"Gradio failed to start on {server_name}:{actual_port}: {exc}\n"
+            f"This is a container/network-level bind failure, not something "
+            f"this script can retry its way around. Things to check on the "
+            f"Railway (or other host) dashboard:\n"
+            f"  1. Duplicate deployments/replicas of this same service "
+            f"still running and holding the port.\n"
+            f"  2. The service's configured PORT/target port actually "
+            f"matches what Railway is routing to (Settings -> Networking).\n"
+            f"  3. Any custom start command, health check, or sidecar that "
+            f"might also be binding a port inside this same container.\n"
+            f"Exiting cleanly so the platform's restart/backoff policy "
+            f"(rather than a Python crash loop) governs what happens next."
+        )
+        sys.exit(1)
