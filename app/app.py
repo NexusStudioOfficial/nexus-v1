@@ -17,6 +17,8 @@ Run directly (locally or on HF Spaces):
 from __future__ import annotations
 
 import os
+import signal
+import socket
 import sys
 import json
 from pathlib import Path
@@ -38,37 +40,90 @@ logger = get_logger(__name__)
 
 
 # ------------------------------------------------------------------------------
-# Custom styling -- kept minimal and dependency-free (no external assets).
+# Custom styling -- a slightly more "designed" look than Gradio's stock theme,
+# still dependency-free (no external fonts/assets, so it works offline and
+# inside the locked-down container).
 # ------------------------------------------------------------------------------
 CUSTOM_CSS = """
+:root {
+    --nexus-radius: 14px;
+}
+
 .nexus-header {
     text-align: center;
-    padding: 8px 0 4px 0;
+    padding: 18px 0 6px 0;
 }
 
 .nexus-header h1 {
-    margin-bottom: 2px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-size: 1.9em;
+    background: linear-gradient(90deg, var(--body-text-color) 0%, var(--body-text-color-subdued) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.nexus-header p {
+    color: var(--body-text-color-subdued);
+    font-size: 0.95em;
+    margin-top: 0;
 }
 
 .nexus-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     border: 1px solid var(--border-color-primary);
-    border-radius: 8px;
-    padding: 10px 14px;
+    border-radius: var(--nexus-radius);
+    padding: 10px 16px;
     font-size: 0.9em;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
 .nexus-status.ok {
     background: var(--color-accent-soft);
+    border-color: var(--color-accent);
+}
+
+.nexus-status.error {
+    background: color-mix(in srgb, var(--color-red-500) 12%, transparent);
+    border-color: var(--color-red-500);
+}
+
+.nexus-status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.nexus-status.ok .dot {
+    background: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.nexus-status.error .dot {
+    background: var(--color-red-500);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-red-500) 25%, transparent);
+}
+
+.nexus-chatpanel {
+    border-radius: var(--nexus-radius);
+    overflow: hidden;
 }
 
 .nexus-footer {
     text-align: center;
     color: var(--body-text-color-subdued);
-    font-size: 0.85em;
-    padding-top: 10px;
+    font-size: 0.82em;
+    padding-top: 14px;
+    line-height: 1.6;
+}
+
+.nexus-footer .sep {
+    margin: 0 6px;
+    opacity: 0.5;
 }
 """
 
@@ -315,18 +370,19 @@ def build_interface() -> gr.Blocks:
         with gr.Column(elem_classes=["nexus-header"]):
             gr.Markdown(
                 f"# {APP_TITLE}\n"
-                "A lightweight causal language model running on ONNX Runtime (CPU)."
+                "<p>A lightweight causal language model for Luau/Roblox code, running on ONNX Runtime (CPU).</p>"
             )
 
         if LOAD_ERROR is not None:
             gr.Markdown(
-                f'<div class="nexus-status">Model failed to load: {LOAD_ERROR}</div>'
+                f'<div class="nexus-status error"><span class="dot"></span>'
+                f"Model failed to load: {LOAD_ERROR}</div>"
             )
         else:
             gr.Markdown(
-                f'<div class="nexus-status ok">'
+                f'<div class="nexus-status ok"><span class="dot"></span>'
                 f"Model loaded: <strong>{ACTIVE_MODEL_NAME}</strong> "
-                f"&middot; Backend: ONNX Runtime (CPU)"
+                f"&middot; Backend: ONNX Runtime (CPU, INT8 quantized)"
                 f"</div>"
             )
 
@@ -338,7 +394,7 @@ def build_interface() -> gr.Blocks:
             # examples/footer above and below it makes the *page* taller
             # than the viewport too, so you end up with two nested
             # scrollbars (the chat log's own, plus the browser page's).
-            chatbot=gr.Chatbot(height=480),
+            chatbot=gr.Chatbot(height=480, elem_classes=["nexus-chatpanel"], show_label=False),
             additional_inputs=[
                 gr.Slider(
                     minimum=1,
@@ -406,8 +462,8 @@ def build_interface() -> gr.Blocks:
 
         gr.Markdown(
             f'<div class="nexus-footer">'
-            f"Model: {ACTIVE_MODEL_NAME} (custom mini causal Transformer) &middot; "
-            f"Backend: ONNX Runtime (INT8 quantized)<br>"
+            f"Model: {ACTIVE_MODEL_NAME} (custom mini causal Transformer)"
+            f"<span class=\"sep\">&middot;</span>Backend: ONNX Runtime (INT8 quantized)<br>"
             f"Built with PyTorch, Hugging Face Transformers, and Gradio."
             f"</div>"
         )
@@ -415,7 +471,63 @@ def build_interface() -> gr.Blocks:
     return demo
 
 
+def _handle_sigterm(signum, frame) -> None:
+    """
+    Exit immediately on SIGTERM instead of letting Python run any default/
+    ignored handling. Railway (and most container platforms) send SIGTERM on
+    redeploy/restart and then SIGKILL after a grace period if the process is
+    still alive. Gradio's own server generally releases its socket when the
+    process exits, but only if the process actually exits promptly -- if
+    something upstream (a hung request, a blocking call) delays that, the
+    old container can still be holding the port when the new one starts,
+    which is what produced the repeated "port still occupied" retries seen
+    previously. Reacting to SIGTERM directly, rather than relying on
+    whatever the default handler happens to do, makes shutdown fast and
+    predictable.
+    """
+    logger.info(f"Received signal {signum}; shutting down.")
+    sys.exit(0)
+
+
+def _port_is_free(host: str, port: int) -> bool:
+    """Best-effort check mirroring how Gradio itself probes the port."""
+    probe_host = "127.0.0.1" if host == "0.0.0.0" else host
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((probe_host, port))
+            return True
+        except OSError:
+            return False
+
+
+def _find_available_port(host: str, preferred_port: int, max_scan: int = 20) -> int:
+    """
+    Return preferred_port if it's free; otherwise scan forward for the next
+    free port. This is the actual fix for "Cannot find empty port": rather
+    than retrying the same fixed port and eventually crashing if something
+    else never releases it (a stuck previous instance, a platform
+    reverse-proxy, or a genuinely different process on that port), the app
+    finds *a* usable port and starts there. Railway/Render route traffic to
+    whatever port the app reports it's listening on via their dashboards'
+    detected port, but when $PORT is fixed by the platform (the normal case)
+    this loop will find preferred_port free on the very first check and
+    behave exactly as before -- the fallback only kicks in when that
+    assumption breaks.
+    """
+    for candidate in range(preferred_port, preferred_port + max_scan):
+        if _port_is_free(host, candidate):
+            return candidate
+    logger.warning(
+        f"No free port found in range {preferred_port}-{preferred_port + max_scan - 1}; "
+        f"falling back to {preferred_port} and letting Gradio raise its own error."
+    )
+    return preferred_port
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, _handle_sigterm)
+
     interface = build_interface()
 
     server_name = os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1")
@@ -426,50 +538,23 @@ if __name__ == "__main__":
     # hosting platforms like Render/Railway inject $PORT and expect the app
     # to bind to 0.0.0.0, so those environment variables override the
     # defaults automatically in that environment (see Dockerfile).
-    #
-    # Railway/Render sometimes start a new container instance before the
-    # previous one has fully released its port (a slow shutdown, an
-    # overlapping redeploy, or a container that was killed without a clean
-    # SIGTERM handler running). When that happens Gradio's own port-picking
-    # logic still fails because we're explicitly pinning a single port
-    # (server_port=requested_port leaves it no room to pick another one).
-    # To make restarts self-healing instead of crash-looping forever, we
-    # retry a few times with a short backoff -- giving the old process time
-    # to actually die and free the socket -- before giving up loudly.
-    import socket
-    import time
-
-    def _port_is_free(port: int) -> bool:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                s.bind((server_name if server_name != "0.0.0.0" else "0.0.0.0", port))
-                return True
-            except OSError:
-                return False
-
-    max_attempts = 6
-    wait_seconds = 5
-    for attempt in range(1, max_attempts + 1):
-        if _port_is_free(requested_port):
-            break
+    actual_port = _find_available_port(server_name, requested_port)
+    if actual_port != requested_port:
         logger.warning(
-            f"Port {requested_port} is still occupied (likely a previous "
-            f"instance still shutting down). Retry {attempt}/{max_attempts} "
-            f"in {wait_seconds}s..."
-        )
-        time.sleep(wait_seconds)
-    else:
-        logger.error(
-            f"Port {requested_port} did not free up after {max_attempts} "
-            f"retries. If this keeps happening on every deploy, check your "
-            f"hosting platform's health-check / restart settings -- the old "
-            f"container process may not be receiving or handling SIGTERM."
+            f"Requested port {requested_port} was not available (something "
+            f"else in this container is bound to it), so the app is starting "
+            f"on {actual_port} instead. If your hosting platform expects a "
+            f"specific port, update its configuration to route to {actual_port}, "
+            f"or investigate why {requested_port} is already occupied -- most "
+            f"often this means a previous instance of this same app is still "
+            f"running (check for duplicate deployments/replicas)."
         )
 
     interface.launch(
         theme=gr.themes.Soft(),
         css=CUSTOM_CSS,
         server_name=server_name,
-        server_port=requested_port,
+        server_port=actual_port,
+        favicon_path=None,
+        show_error=True,
     )
